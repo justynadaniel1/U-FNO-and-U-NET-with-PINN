@@ -6,6 +6,8 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 from joblib import load
+from sklearn.metrics import mean_absolute_error
+import csv
 import numpy as np
 import pandas as pd
 import os
@@ -350,10 +352,8 @@ if __name__ == '__main__':
 
 
 
-    # Pfad für die Speicherung der Logs
     csv_file_path = "training_logs.csv"
 
-    # Erstellen der CSV-Datei und Schreiben der Kopfzeile
     with open(csv_file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Epoch", "Train Loss (MSE)", "Train MAE", "Validation Loss (MSE)", "Validation MAE", "Epoch Time (s)", "Test Loss (MSE)", "Test MAE"])
@@ -413,7 +413,6 @@ if __name__ == '__main__':
         print(f"Epoch {epoch+1}/{num_epochs}, Training Loss: {train_loss:.8f}, Training MAE: {train_mae:.8f}, "
             f"Validation Loss: {val_loss:.8f}, Validation MAE: {val_mae:.8f}, Time: {epoch_time:.2f} seconds")
 
-        # Speichern der Ergebnisse in die CSV-Datei
         with open(csv_file_path, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow([epoch + 1, train_loss, train_mae, val_loss, val_mae, epoch_time, None, None])
@@ -457,7 +456,7 @@ if __name__ == '__main__':
     test_mae /= len(test_loader.dataset)
     print(f"Test Loss: {test_loss:.8f}, Test MAE: {test_mae:.8f}")
 
-    # Speichern der Testergebnisse in die CSV-Datei
+
     with open(csv_file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([None, None, None, None, None, None, test_loss, test_mae])
