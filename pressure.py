@@ -123,11 +123,11 @@ class ResidualBlock(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(channels),
-            nn.ReLU() #conv1
+            nn.ReLU() 
         )
         self.conv2 = nn.Sequential(
             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels) #con2
+            nn.BatchNorm2d(channels) 
         )
         self.ReLU = nn.ReLU()
 
