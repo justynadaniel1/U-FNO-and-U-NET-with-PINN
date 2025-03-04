@@ -4,11 +4,13 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
 from joblib import load
 import numpy as np
 import pandas as pd
 import os
 import time 
+import csv
 import argparse
 
 def parse_args():
@@ -347,12 +349,6 @@ if __name__ == '__main__':
     
 
 
-    import csv
-    import time
-    import torch
-    import numpy as np
-    import os
-    from sklearn.metrics import mean_absolute_error
 
     # Pfad für die Speicherung der Logs
     csv_file_path = "training_logs.csv"
