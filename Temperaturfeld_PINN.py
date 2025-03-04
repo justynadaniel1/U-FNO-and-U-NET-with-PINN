@@ -4,8 +4,10 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
 from joblib import load
 import numpy as np
+import csv
 import pandas as pd
 import os
 import time
@@ -560,10 +562,6 @@ if __name__ == '__main__':
         mu =  0.06655 * torch.exp(-0.01338 * temperature)
         return mu
     
-
-
-    import csv
-    from sklearn.metrics import mean_absolute_error
     
 
     # Pfad für die Speicherung der Logs
