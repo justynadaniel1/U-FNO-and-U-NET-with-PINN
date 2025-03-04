@@ -4,24 +4,13 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+import csv
 from sklearn.metrics import mean_absolute_error
 from joblib import load
 import numpy as np
 import pandas as pd
 import os
-import csv
 import time 
-import argparse
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Training with different activations.")
-    parser.add_argument('--start_epoch', type=int, default=0, help='Epoch to start training from.')
-    args = parser.parse_args()
-    return args
-
-if __name__ == "__main__":
-    args = parse_args()
-    print(f"Starting training from epoch {args.start_epoch}")
 
 
 # Set device to GPU if available
@@ -114,19 +103,19 @@ class ResidualBlock(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(channels),
-            nn.ReLU() #conv1
+            nn.ReLU() 
         )
         self.conv2 = nn.Sequential(
             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels) #con2
+            nn.BatchNorm2d(channels) 
         )
-        self.ReLU = nn.ReLU()
+        self.relu = nn.ReLU()
 
     def forward(self, x):
         res = self.conv1(x)
         res = self.conv2(res)
         x = x + res
-        x = self.ReLU(x)
+        x = self.relu(x)
         return x
 
 class TempFieldModel(nn.Module):
@@ -159,8 +148,9 @@ class TempFieldModel(nn.Module):
             nn.BatchNorm2d(128),
             nn.ReLU() 
         )
-      
-    
+
+           
+
         # Residual blocks
         self.res_blocks = nn.Sequential(
             *[ResidualBlock(128) for _ in range(12)]
@@ -196,38 +186,39 @@ class TempFieldModel(nn.Module):
         self.output_layer = nn.Conv2d(8, 1, kernel_size=3, padding=1)
 
     def forward(self, vector_data, field):
-
+        # vector_data: (batch_size, 2)
+        # field: (batch_size, 1, 256, 256)
 
         # Project vector data
-        vector_proj = self.vector_projection(vector_data) 
-        vector_proj = vector_proj.view(-1, 2, 256, 256) 
-    
+        vector_proj = self.vector_projection(vector_data)  # (batch_size, 256*256*2)
+        vector_proj = vector_proj.view(-1, 2, 256, 256)  # (batch_size, 2, 256, 256)
+
         # Concatenate vector projection and field
-        x = torch.cat([field, vector_proj], dim=1)  
+        x = torch.cat([field, vector_proj], dim=1)  # (batch_size, 1+2, 256, 256)
 
         # Encoder
-        x1 = self.encoder_conv1(x)  
-        x2 = self.encoder_conv2(x1) 
-        x3 = self.encoder_conv3(x2) 
-        x4 = self.encoder_conv4(x3) 
+        x1 = self.encoder_conv1(x)  # (batch_size, 16, 128, 128)
+        x2 = self.encoder_conv2(x1)  # (batch_size, 32, 64, 64)
+        x3 = self.encoder_conv3(x2)  # (batch_size, 64, 32, 32)
+        x4 = self.encoder_conv4(x3)  # (batch_size, 128, 16, 16)
 
         # Residual blocks
-        x = self.res_blocks(x4)  
+        x = self.res_blocks(x4)  # (batch_size, 128, 16, 16)
 
         # Decoder
-        x = self.decoder_conv1(x)  
-        x = torch.cat([x, x3], dim=1)  
+        x = self.decoder_conv1(x)  # (batch_size, 64, 32, 32)
+        x = torch.cat([x, x3], dim=1)  # (batch_size, 64+64=128, 32, 32)
 
-        x = self.decoder_conv2(x)  
-        x = torch.cat([x, x2], dim=1) 
+        x = self.decoder_conv2(x)  # (batch_size, 32, 64, 64)
+        x = torch.cat([x, x2], dim=1)  # (batch_size, 32+32=64, 64, 64)
 
-        x = self.decoder_conv3(x) 
-        x = torch.cat([x, x1], dim=1)  
+        x = self.decoder_conv3(x)  # (batch_size, 16, 128, 128)
+        x = torch.cat([x, x1], dim=1)  # (batch_size, 16+16=32, 128, 128)
 
-        x = self.decoder_conv4(x)  
+        x = self.decoder_conv4(x)  # (batch_size, 8, 256, 256)
 
         # Output layer
-        output = self.output_layer(x)  
+        output = self.output_layer(x)  # (batch_size, 1, 256, 256)
 
         return output
 
@@ -284,10 +275,10 @@ if __name__ == '__main__':
     test_loader = DataLoader(test_dataset, batch_size=512, shuffle=False, num_workers=4)
     #torch.set_num_threads(4)
 
-    
+
     csv_file_path = "training_logs.csv"
 
-    # create CSV
+
     with open(csv_file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Epoch", "Train Loss (MSE)", "Train MAE", "Validation Loss (MSE)", "Validation MAE", "Epoch Time (s)", "Test Loss (MSE)", "Test MAE"])
@@ -347,7 +338,6 @@ if __name__ == '__main__':
         print(f"Epoch {epoch+1}/{num_epochs}, Training Loss: {train_loss:.8f}, Training MAE: {train_mae:.8f}, "
             f"Validation Loss: {val_loss:.8f}, Validation MAE: {val_mae:.8f}, Time: {epoch_time:.2f} seconds")
 
-        # Save CSV
         with open(csv_file_path, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow([epoch + 1, train_loss, train_mae, val_loss, val_mae, epoch_time, None, None])
@@ -390,6 +380,7 @@ if __name__ == '__main__':
     test_loss /= len(test_loader.dataset)
     test_mae /= len(test_loader.dataset)
     print(f"Test Loss: {test_loss:.8f}, Test MAE: {test_mae:.8f}")
+
 
     with open(csv_file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
