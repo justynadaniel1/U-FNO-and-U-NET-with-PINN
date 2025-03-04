@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
 from joblib import load
 import numpy as np
 import pandas as pd
@@ -282,13 +283,6 @@ if __name__ == '__main__':
     train_loader = DataLoader(train_dataset, batch_size=512, shuffle=True, num_workers=4)
     test_loader = DataLoader(test_dataset, batch_size=512, shuffle=False, num_workers=4)
     #torch.set_num_threads(4)
-
-    import csv
-    import time
-    import torch
-    import numpy as np
-    import os
-    from sklearn.metrics import mean_absolute_error
 
     # Pfad für die Speicherung der Logs
     csv_file_path = "training_logs.csv"
