@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from joblib import load
+from sklearn.metrics import mean_absolute_error
 import numpy as np
 import pandas as pd
 import os
@@ -108,9 +109,6 @@ class TempFieldDataset(Dataset):
         field_next = torch.tensor(field_next, dtype=torch.float32)
 
         return (vector_data, field), field_next
-
-import torch
-import torch.nn as nn
 
 class Fourier2DLayer(nn.Module):
     def __init__(self, modes, channels):
@@ -334,13 +332,6 @@ if __name__ == '__main__':
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=0)
     #torch.set_num_threads(4)
 
-
-    import csv
-    import time
-    import torch
-    import numpy as np
-    import os
-    from sklearn.metrics import mean_absolute_error
 
     # Pfad für die Speicherung der Logs
     csv_file_path = "training_logs.csv"
