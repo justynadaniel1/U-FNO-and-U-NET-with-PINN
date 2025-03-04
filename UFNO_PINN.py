@@ -6,9 +6,11 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
 from joblib import load
 import numpy as np
 import pandas as pd
+import csv
 import os
 import time 
 import argparse
@@ -109,8 +111,6 @@ class TempFieldDataset(Dataset):
 
         return (vector_data, field), field_next
 
-import torch
-import torch.nn as nn
 
 class Fourier2DLayer(nn.Module):
     def __init__(self, modes, channels):
@@ -395,15 +395,7 @@ if __name__ == '__main__':
      loss =  mse_loss+ grad_mse_loss + temporal_grad_loss + boundary_loss
      
      return (loss)
-    
 
-
-    import csv
-    import time
-    import torch
-    import numpy as np
-    import os
-    from sklearn.metrics import mean_absolute_error
 
     # Pfad für die Speicherung der Logs
     csv_file_path = "training_logs.csv"
