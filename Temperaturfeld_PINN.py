@@ -204,39 +204,36 @@ class TempFieldModel(nn.Module):
         self.output_layer = nn.Conv2d(8, 1, kernel_size=3, padding=1)
 
     def forward(self, vector_data, field_temp, field_pressure):
-        # vector_data: (batch_size, 2)
-        # field: (batch_size, 1, 256, 256)
 
         # Project vector data
-        vector_proj = self.vector_projection(vector_data)  # (batch_size, 256*256*2)
-        vector_proj = vector_proj.view(-1, 2, 256, 256)  # (batch_size, 2, 256, 256)
+        vector_proj = self.vector_projection(vector_data) 
+        vector_proj = vector_proj.view(-1, 2, 256, 256)
     
         # Concatenate vector projection and field
-        x = torch.cat([field_temp, field_pressure, vector_proj], dim=1)  # (batch_size, 1+2, 256, 256)
+        x = torch.cat([field_temp, field_pressure, vector_proj], dim=1) 
 
         # Encoder
-        x1 = self.encoder_conv1(x)  # (batch_size, 16, 128, 128)
-        x2 = self.encoder_conv2(x1)  # (batch_size, 32, 64, 64)
-        x3 = self.encoder_conv3(x2)  # (batch_size, 64, 32, 32)
-        x4 = self.encoder_conv4(x3)  # (batch_size, 128, 16, 16)
+        x1 = self.encoder_conv1(x)  
+        x2 = self.encoder_conv2(x1)  
+        x3 = self.encoder_conv3(x2) 
+        x4 = self.encoder_conv4(x3)  
 
         # Residual blocks
-        x = self.res_blocks(x4)  # (batch_size, 128, 16, 16)
+        x = self.res_blocks(x4) 
 
         # Decoder
-        x = self.decoder_conv1(x)  # (batch_size, 64, 32, 32)
-        x = torch.cat([x, x3], dim=1)  # (batch_size, 64+64=128, 32, 32)
+        x = self.decoder_conv1(x)  
+        x = torch.cat([x, x3], dim=1) 
 
-        x = self.decoder_conv2(x)  # (batch_size, 32, 64, 64)
-        x = torch.cat([x, x2], dim=1)  # (batch_size, 32+32=64, 64, 64)
+        x = self.decoder_conv2(x) 
+        x = torch.cat([x, x2], dim=1)  
 
-        x = self.decoder_conv3(x)  # (batch_size, 16, 128, 128)
-        x = torch.cat([x, x1], dim=1)  # (batch_size, 16+16=32, 128, 128)
+        x = self.decoder_conv3(x) 
+        x = torch.cat([x, x1], dim=1) 
 
-        x = self.decoder_conv4(x)  # (batch_size, 8, 256, 256)
-
+        x = self.decoder_conv4(x) 
         # Output layer
-        output = self.output_layer(x)  # (batch_size, 1, 256, 256)
+        output = self.output_layer(x)  
 
         return output
 
@@ -429,24 +426,7 @@ if __name__ == '__main__':
      grad_x_pressure_original = F.pad(grad_x_pressure_original, (0, 0, 0, 1))  
 
      # Add boundary values for y-differences to match dimensions
-     grad_y_pressure_original = F.pad(grad_y_pressure_original, (0, 1, 0, 0))  
-
-   
-     import matplotlib.pyplot as plt
-
-     # Nehme den ersten Batch und den ersten Kanal
-     output_folder = "Druckfeld"
-     grad_x_slice = grad_y_pressure_original[0, 0, :, :].cpu().numpy()
-        
-     # Erstelle die Abbildung
-     plt.figure(figsize=(6, 5))
-     plt.imshow(grad_x_slice, cmap='viridis', aspect='auto')
-     plt.colorbar(label='Gradient')
-     plt.xlabel('x')
-     plt.ylabel('y')
-     plt.show()
-     
-    
+     grad_y_pressure_original = F.pad(grad_y_pressure_original, (0, 1, 0, 0))   
 
      # Create a 256x256 array with individual steps
      y = torch.linspace(-50, 50, steps=256).unsqueeze(1).expand(256, 256).to(target_field_temp.device)
@@ -494,28 +474,6 @@ if __name__ == '__main__':
      # Calculate heat transport
      heat_transport_pred = energy_rock_output + div_pred + Q
      print(torch.mean(heat_transport_pred)**2)
-     '''
-     import matplotlib.pyplot as plt
-    
-     if epoch % 20 == 0:
-        # Nehme den ersten Batch und den ersten Kanal
-        output_folder = "Druckfeld"
-        grad_x_slice = heat_transport_pred[0, 0, :, :].cpu().numpy()
-        
-        # Erstelle die Abbildung
-        plt.figure(figsize=(6, 5))
-        plt.imshow(grad_x_slice, cmap='viridis', aspect='auto')
-        plt.colorbar(label='Gradient')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        
-        # Speichern des Bildes
-        save_path = os.path.join(output_folder, f"epoch_{epoch:03d}.png")
-        plt.savefig(save_path)
-        plt.close()  # Schließt die aktuelle Abbildung, um Speicher zu sparen
-        print(f"Bild für Epoche {epoch} gespeichert: {save_path}") 
-     '''
-    
      
      
      #Scale Heat transport
@@ -564,10 +522,9 @@ if __name__ == '__main__':
     
     
 
-    # Pfad für die Speicherung der Logs
     csv_file_path = "training_logs2.csv"
 
-    # Erstellen der CSV-Datei und Schreiben der Kopfzeile
+    # create CSV
     with open(csv_file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Epoch", "Train Loss", "Validation Loss", "Epoch Time", "Test Loss"])
@@ -652,11 +609,11 @@ if __name__ == '__main__':
                 early_stop = True
                 break
 
-    # Speichern des endgültigen Modells
+    # Save model
     model_file = os.path.join(model_dir, 'test_model_only_tempfield_injection_final_version1.pth')
     torch.save(model.state_dict(), model_file)
 
-    # Testen des Modells
+    # Test model
     model.load_state_dict(torch.load(model_checkpoint_path))
     model.eval()
     test_loss = 0
@@ -680,7 +637,7 @@ if __name__ == '__main__':
     test_loss /= len(test_loader.dataset)
     print(f"Test Loss: {test_loss:.8f}")
 
-    # Speichern der Testergebnisse in die CSV-Datei
+   
     with open(csv_file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([None, None, None, None, test_loss])
