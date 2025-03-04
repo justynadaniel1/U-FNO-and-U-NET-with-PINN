@@ -4,10 +4,10 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error
 from joblib import load
-import numpy as np
+from sklearn.metrics import mean_absolute_error
 import csv
+import numpy as np
 import pandas as pd
 import os
 import time
@@ -122,11 +122,11 @@ class ResidualBlock(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(channels),
-            nn.ReLU() #conv1
+            nn.ReLU() 
         )
         self.conv2 = nn.Sequential(
             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels) #con2
+            nn.BatchNorm2d(channels) 
         )
         self.ReLU = nn.ReLU()
 
@@ -204,36 +204,39 @@ class TempFieldModel(nn.Module):
         self.output_layer = nn.Conv2d(8, 1, kernel_size=3, padding=1)
 
     def forward(self, vector_data, field_temp, field_pressure):
+        # vector_data: (batch_size, 2)
+        # field: (batch_size, 1, 256, 256)
 
         # Project vector data
-        vector_proj = self.vector_projection(vector_data) 
-        vector_proj = vector_proj.view(-1, 2, 256, 256)
+        vector_proj = self.vector_projection(vector_data)  # (batch_size, 256*256*2)
+        vector_proj = vector_proj.view(-1, 2, 256, 256)  # (batch_size, 2, 256, 256)
     
         # Concatenate vector projection and field
-        x = torch.cat([field_temp, field_pressure, vector_proj], dim=1) 
+        x = torch.cat([field_temp, field_pressure, vector_proj], dim=1)  # (batch_size, 4, 256, 256)
 
         # Encoder
-        x1 = self.encoder_conv1(x)  
-        x2 = self.encoder_conv2(x1)  
-        x3 = self.encoder_conv3(x2) 
-        x4 = self.encoder_conv4(x3)  
+        x1 = self.encoder_conv1(x)  # (batch_size, 16, 128, 128)
+        x2 = self.encoder_conv2(x1)  # (batch_size, 32, 64, 64)
+        x3 = self.encoder_conv3(x2)  # (batch_size, 64, 32, 32)
+        x4 = self.encoder_conv4(x3)  # (batch_size, 128, 16, 16)
 
         # Residual blocks
-        x = self.res_blocks(x4) 
+        x = self.res_blocks(x4)  # (batch_size, 128, 16, 16)
 
         # Decoder
-        x = self.decoder_conv1(x)  
-        x = torch.cat([x, x3], dim=1) 
+        x = self.decoder_conv1(x)  # (batch_size, 64, 32, 32)
+        x = torch.cat([x, x3], dim=1)  # (batch_size, 64+64=128, 32, 32)
 
-        x = self.decoder_conv2(x) 
-        x = torch.cat([x, x2], dim=1)  
+        x = self.decoder_conv2(x)  # (batch_size, 32, 64, 64)
+        x = torch.cat([x, x2], dim=1)  # (batch_size, 32+32=64, 64, 64)
 
-        x = self.decoder_conv3(x) 
-        x = torch.cat([x, x1], dim=1) 
+        x = self.decoder_conv3(x)  # (batch_size, 16, 128, 128)
+        x = torch.cat([x, x1], dim=1)  # (batch_size, 16+16=32, 128, 128)
 
-        x = self.decoder_conv4(x) 
+        x = self.decoder_conv4(x)  # (batch_size, 8, 256, 256)
+
         # Output layer
-        output = self.output_layer(x)  
+        output = self.output_layer(x)  # (batch_size, 1, 256, 256)
 
         return output
 
@@ -426,7 +429,8 @@ if __name__ == '__main__':
      grad_x_pressure_original = F.pad(grad_x_pressure_original, (0, 0, 0, 1))  
 
      # Add boundary values for y-differences to match dimensions
-     grad_y_pressure_original = F.pad(grad_y_pressure_original, (0, 1, 0, 0))   
+     grad_y_pressure_original = F.pad(grad_y_pressure_original, (0, 1, 0, 0))  
+    
 
      # Create a 256x256 array with individual steps
      y = torch.linspace(-50, 50, steps=256).unsqueeze(1).expand(256, 256).to(target_field_temp.device)
@@ -475,7 +479,6 @@ if __name__ == '__main__':
      heat_transport_pred = energy_rock_output + div_pred + Q
      print(torch.mean(heat_transport_pred)**2)
      
-     
      #Scale Heat transport
      min_heat_transport = torch.min(heat_transport_pred)
      max_heat_transport = torch.max(heat_transport_pred)
@@ -520,11 +523,14 @@ if __name__ == '__main__':
         mu =  0.06655 * torch.exp(-0.01338 * temperature)
         return mu
     
-    
 
+
+
+
+    # Pfad für die Speicherung der Logs
     csv_file_path = "training_logs2.csv"
 
-    # create CSV
+    # Erstellen der CSV-Datei und Schreiben der Kopfzeile
     with open(csv_file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Epoch", "Train Loss", "Validation Loss", "Epoch Time", "Test Loss"])
@@ -590,7 +596,7 @@ if __name__ == '__main__':
         print(f"Epoch {epoch+1}/{num_epochs}, Training Loss: {train_loss:.8f}, "
             f"Validation Loss: {val_loss:.8f}, Time: {epoch_time:.2f} seconds")
 
-        # Speichern der Ergebnisse in die CSV-Datei
+       
         with open(csv_file_path, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow([epoch + 1, train_loss, val_loss, epoch_time, None])
@@ -609,11 +615,11 @@ if __name__ == '__main__':
                 early_stop = True
                 break
 
-    # Save model
+ 
     model_file = os.path.join(model_dir, 'test_model_only_tempfield_injection_final_version1.pth')
     torch.save(model.state_dict(), model_file)
 
-    # Test model
+
     model.load_state_dict(torch.load(model_checkpoint_path))
     model.eval()
     test_loss = 0
@@ -637,7 +643,6 @@ if __name__ == '__main__':
     test_loss /= len(test_loader.dataset)
     print(f"Test Loss: {test_loss:.8f}")
 
-   
     with open(csv_file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([None, None, None, None, test_loss])
