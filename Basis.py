@@ -196,8 +196,7 @@ class TempFieldModel(nn.Module):
         self.output_layer = nn.Conv2d(8, 1, kernel_size=3, padding=1)
 
     def forward(self, vector_data, field):
-        # vector_data: (batch_size, 2)
-        # field: (batch_size, 1, 256, 256)
+
 
         # Project vector data
         vector_proj = self.vector_projection(vector_data) 
@@ -348,7 +347,7 @@ if __name__ == '__main__':
         print(f"Epoch {epoch+1}/{num_epochs}, Training Loss: {train_loss:.8f}, Training MAE: {train_mae:.8f}, "
             f"Validation Loss: {val_loss:.8f}, Validation MAE: {val_mae:.8f}, Time: {epoch_time:.2f} seconds")
 
-        # Speichern der Ergebnisse in die CSV-Datei
+        # Save CSV
         with open(csv_file_path, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow([epoch + 1, train_loss, train_mae, val_loss, val_mae, epoch_time, None, None])
