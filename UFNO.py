@@ -273,7 +273,7 @@ class UFNO(nn.Module):
         x2 = self.relu(self.unet3(x))
         x = x1 + x2
 
-        x = self.projection1(x)  # Shape: (batch_size, 1, 256, 256)
+        x = self.projection1(x) 
 
         return x
 
